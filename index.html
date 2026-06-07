@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🐸 カエルジャンプ</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=M+PLUS+Rounded+1c:wght@700;800&display=swap');
+
+:root {
+  --green-dark:  #2d6a2d;
+  --green-mid:   #3a8c3a;
+  --green-light: #5cbf5c;
+  --green-pale:  #a8e0a8;
+  --sky1: #b3e5fc;
+  --sky2: #e1f5fe;
+  --ground: #4caf50;
+  --ground2: #388e3c;
+  --water: #29b6f6;
+  --water2: #0288d1;
+  --yellow: #ffe066;
+  --orange: #ff9800;
+  --red: #f44336;
+  --white: #fffde7;
+  --shadow: rgba(0,0,0,0.18);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--sky1);
+  font-family: 'M PLUS Rounded 1c', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* ===== スタート画面 ===== */
+#start-screen {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, #81d4fa 0%, #b3e5fc 40%, #66bb6a 40%, #4caf50 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 100;
+}
+
+#start-frog {
+  font-size: 5rem;
+  animation: startBounce 0.7s ease-in-out infinite alternate;
+}
+@keyframes startBounce {
+  from { transform: translateY(0) scaleY(1); }
+  to   { transform: translateY(-20px) scaleY(1.1); }
+}
+
+#start-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.3rem;
+  color: var(--green-dark);
+  text-shadow: 3px 3px 0 var(--green-pale), 5px 5px 0 rgba(0,0,0,0.15);
+  text-align: center;
+  line-height: 1.8;
+  letter-spacing: 1px;
+}
+
+.start-hint {
+  font-size: 0.85rem;
+  color: var(--green-dark);
+  text-align: center;
+  line-height: 2;
+  background: rgba(255,253,231,0.85);
+  padding: 12px 24px;
+  border-radius: 16px;
+  border: 2px solid var(--green-light);
+  box-shadow: 0 4px 0 var(--green-mid);
+}
+.start-hint b { color: var(--green-dark); }
+
+.pixel-btn {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.85rem;
+  background: var(--green-light);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 14px 32px;
+  cursor: pointer;
+  box-shadow: 0 5px 0 var(--green-dark), 0 7px 12px rgba(0,0,0,0.2);
+  transition: transform 0.08s, box-shadow 0.08s;
+  letter-spacing: 1px;
+}
+.pixel-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 var(--green-dark), 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* ===== ゲームオーバー画面 ===== */
+#gameover-screen {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  z-index: 100;
+}
+#gameover-screen.show { display: flex; }
+
+#gameover-box {
+  background: var(--white);
+  border: 4px solid var(--green-dark);
+  border-radius: 16px;
+  padding: 28px 36px;
+  text-align: center;
+  box-shadow: 6px 6px 0 var(--green-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+#gameover-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.1rem;
+  color: var(--red);
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.15);
+}
+
+#gameover-score {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  color: var(--green-dark);
+  line-height: 2.2;
+}
+
+/* ===== メインゲーム ===== */
+#game-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* スコアバー */
+#score-bar {
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+}
+
+#score-display {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  color: var(--green-dark);
+  background: rgba(255,253,231,0.9);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--green-mid);
+  box-shadow: 0 2px 0 var(--green-dark);
+}
+
+#hi-display {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.65rem;
+  color: var(--orange);
+  background: rgba(255,253,231,0.9);
+  padding: 6px 14px;
+  border-radius: 20px;
+  border: 2px solid var(--orange);
+  box-shadow: 0 2px 0 #e65100;
+}
+
+/* ライフ */
+#life-bar {
+  display: flex;
+  gap: 4px;
+}
+
+.life-heart {
+  font-size: 1.1rem;
+  transition: transform 0.2s;
+}
+.life-heart.lost {
+  filter: grayscale(1);
+  opacity: 0.3;
+  transform: scale(0.8);
+}
+
+/* キャンバス */
+#game-canvas {
+  display: block;
+  width: 100%;
+  max-width: 480px;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 0 3px var(--green-dark);
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* 操作ヒント */
+#hint-bar {
+  display: flex;
+  gap: 16px;
+  margin-top: 10px;
+  font-size: 0.75rem;
+  color: var(--green-dark);
+}
+.hint-pill {
+  background: rgba(255,253,231,0.85);
+  border: 1.5px solid var(--green-mid);
+  border-radius: 20px;
+  padding: 5px 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+}
+
+/* コンボ表示 */
+#combo-display {
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: var(--yellow);
+  text-shadow: 2px 2px 0 var(--orange), 4px 4px 0 rgba(0,0,0,0.2);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 50;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+
+<!-- スタート画面 -->
+<div id="start-screen">
+  <div id="start-frog">🐸</div>
+  <div id="start-title">FROG<br>JUMP!</div>
+  <div class="start-hint">
+    タップ／クリック → <b>ジャンプ</b><br>
+    スワイプ下／長押し → <b>しゃがむ</b><br>
+    障害物を避けてハイスコアを狙え！
+  </div>
+  <button class="pixel-btn" id="start-btn">START!</button>
+</div>
+
+<!-- ゲームオーバー画面 -->
+<div id="gameover-screen">
+  <div id="gameover-box">
+    <div style="font-size:3rem">💀🐸</div>
+    <div id="gameover-title">GAME OVER</div>
+    <div id="gameover-score"></div>
+    <button class="pixel-btn" id="retry-btn">もう一度！</button>
+  </div>
+</div>
+
+<!-- スコアバー -->
+<div id="score-bar">
+  <div id="score-display">SCORE: <span id="score-val">0</span></div>
+  <div id="life-bar">
+    <span class="life-heart" id="h1">❤️</span>
+    <span class="life-heart" id="h2">❤️</span>
+    <span class="life-heart" id="h3">❤️</span>
+  </div>
+  <div id="hi-display">BEST: <span id="hi-val">0</span></div>
+</div>
+
+<!-- ゲームキャンバス -->
+<div id="game-wrap">
+  <canvas id="game-canvas"></canvas>
+</div>
+
+<!-- 操作ヒント -->
+<div id="hint-bar">
+  <div class="hint-pill">👆 タップ: ジャンプ</div>
+  <div class="hint-pill">👇 スワイプ: しゃがむ</div>
+</div>
+
+<!-- コンボ表示 -->
+<div id="combo-display"></div>
+
+<!-- 実績ポップアップ -->
+<div id="ach-popup" style="
+  position:fixed; bottom:22%; left:50%;
+  transform:translateX(-50%) translateY(20px);
+  background:rgba(255,253,231,0.96);
+  border:2.5px solid #ffd740;
+  border-radius:20px;
+  padding:8px 22px;
+  font-family:'Press Start 2P',monospace;
+  font-size:0.62rem;
+  color:#5a3e1b;
+  box-shadow:0 4px 0 #e65100, 0 6px 16px rgba(0,0,0,0.2);
+  white-space:nowrap;
+  opacity:0;
+  pointer-events:none;
+  z-index:50;
+  transition:opacity 0.3s, transform 0.3s;
+"></div>
+
+<script>
+// ===== キャンバス設定 =====
+var canvas = document.getElementById('game-canvas');
+var ctx = canvas.getContext('2d');
+var W, H;
+
+function resizeCanvas() {
+  var maxW = Math.min(window.innerWidth - 8, 480);
+  W = maxW;
+  H = Math.round(maxW * 0.52);
+  canvas.width = W;
+  canvas.height = H;
+  canvas.style.width = W + 'px';
+  canvas.style.height = H + 'px';
+  GROUND_Y = H * 0.72;
+}
+
+// ===== ゲーム定数 =====
+var GROUND_Y;
+var FROG_W, FROG_H;
+var GRAVITY = 0.52;
+var JUMP_FORCE = -14;
+var OBSTACLE_SPEED_INIT = 4.0;
+
+// ===== 状態 =====
+var score = 0;
+var hiScore = parseInt(localStorage.getItem('frogHiScore') || '0', 10);
+var lives = 3;
+var gameActive = false;
+var frameCount = 0;
+var obstacleSpeed;
+var combo = 0;
+var lastDodgeFrame = 0;
+var invincible = 0; // 無敵フレーム数
+
+// ===== カエル =====
+var frog = {
+  x: 0, y: 0,
+  vy: 0,
+  isJumping: false,
+  isDucking: false,
+  frame: 0, // アニメフレーム
+  hitTimer: 0,
+};
+
+// ===== 障害物リスト =====
+var obstacles = [];
+
+// ===== コイン =====
+var coins = [];
+var COIN_R;
+
+function spawnCoin() {
+  COIN_R = W * 0.028;
+  // 地上コイン(y=地面上)か空中コイン(y=ジャンプ頂点付近)
+  var isAir = Math.random() < 0.4;
+  coins.push({
+    x: W + 20,
+    y: isAir ? (GROUND_Y - FROG_H * 1.8) : (GROUND_Y - COIN_R * 2.2),
+    collected: false,
+    bobOffset: Math.random() * Math.PI * 2,
+    isAir: isAir,
+  });
+}
+
+function updateCoins() {
+  COIN_R = W * 0.028;
+  for (var i = coins.length - 1; i >= 0; i--) {
+    coins[i].x -= obstacleSpeed * 0.9;
+    if (coins[i].x < -20) { coins.splice(i, 1); continue; }
+    if (coins[i].collected) continue;
+    // カエルとの衝突
+    var cx = coins[i].x;
+    var cy = coins[i].y + Math.sin(frameCount * 0.08 + coins[i].bobOffset) * 4;
+    var fx = frog.x + FROG_W * 0.5;
+    var fy = frog.isDucking ? (GROUND_Y - FROG_H * 0.5) : (frog.y + FROG_H * 0.5);
+    var dist = Math.sqrt((cx - fx) * (cx - fx) + (cy - fy) * (cy - fy));
+    if (dist < COIN_R + FROG_W * 0.38) {
+      coins[i].collected = true;
+      score += 3;
+      updateScoreUI();
+      spawnCoinParticles(cx, cy);
+      playSound('coin');
+    }
+  }
+}
+
+function drawCoins() {
+  COIN_R = W * 0.028;
+  for (var i = 0; i < coins.length; i++) {
+    if (coins[i].collected) continue;
+    var cx = coins[i].x;
+    var cy = coins[i].y + Math.sin(frameCount * 0.08 + coins[i].bobOffset) * 4;
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(cx, GROUND_Y + 3, COIN_R * 0.8, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // コイン本体
+    var grad = ctx.createRadialGradient(cx - COIN_R * 0.3, cy - COIN_R * 0.3, 0, cx, cy, COIN_R);
+    grad.addColorStop(0, '#fff176');
+    grad.addColorStop(0.5, '#ffd740');
+    grad.addColorStop(1, '#ff8f00');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, COIN_R, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#ff6f00';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // ¥マーク
+    ctx.fillStyle = '#e65100';
+    ctx.font = 'bold ' + Math.round(COIN_R * 1.1) + 'px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('C', cx, cy + 1);
+    ctx.textBaseline = 'alphabetic';
+  }
+}
+
+function spawnCoinParticles(x, y) {
+  for (var i = 0; i < 8; i++) {
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: -Math.random() * 3 - 1,
+      life: 1,
+      color: '#ffd740',
+      size: 3 + Math.random() * 2,
+    });
+  }
+}
+
+// ===== パーティクル =====
+var particles = [];
+
+// ===== 背景オブジェクト =====
+var bgObjects = [];
+
+// ===== 初期化 =====
+function initGame() {
+  resizeCanvas();
+  FROG_W = W * 0.09;
+  FROG_H = W * 0.09;
+  frog.x = W * 0.15;
+  frog.y = GROUND_Y - FROG_H;
+  frog.vy = 0;
+  frog.isJumping = false;
+  frog.isDucking = false;
+  frog.frame = 0;
+  frog.hitTimer = 0;
+  obstacles = [];
+  particles = [];
+  coins = [];
+  score = 0;
+  resetAchievements();
+  lives = 3;
+  frameCount = 0;
+  obstacleSpeed = OBSTACLE_SPEED_INIT;
+  combo = 0;
+  invincible = 0;
+  updateScoreUI();
+  updateLivesUI();
+  generateBgObjects();
+}
+
+function generateBgObjects() {
+  bgObjects = [];
+  for (var i = 0; i < 8; i++) {
+    bgObjects.push({
+      x: Math.random() * W,
+      type: Math.random() < 0.5 ? 'cloud' : 'bush',
+      size: 0.5 + Math.random() * 0.8,
+      speed: 0.3 + Math.random() * 0.4,
+    });
+  }
+}
+
+// ===== UI更新 =====
+function updateScoreUI() {
+  document.getElementById('score-val').textContent = score;
+  document.getElementById('hi-val').textContent = hiScore;
+}
+
+function updateLivesUI() {
+  for (var i = 1; i <= 3; i++) {
+    var el = document.getElementById('h' + i);
+    if (el) {
+      if (i <= lives) {
+        el.classList.remove('lost');
+      } else {
+        el.classList.add('lost');
+      }
+    }
+  }
+}
+
+// ===== 操作 =====
+var touchStartY = 0;
+var touchStartTime = 0;
+var longPressTimer = null;
+
+function doJump() {
+  if (!gameActive) return;
+  if (!frog.isJumping && !frog.isDucking) {
+    frog.vy = JUMP_FORCE;
+    frog.isJumping = true;
+    playSound('jump');
+    spawnJumpParticles();
+  }
+}
+
+function startDuck() {
+  if (!gameActive) return;
+  frog.isDucking = true;
+}
+
+function endDuck() {
+  frog.isDucking = false;
+}
+
+// タッチ
+canvas.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  touchStartY = e.touches[0].clientY;
+  touchStartTime = Date.now();
+  longPressTimer = setTimeout(function() {
+    startDuck();
+  }, 120);
+}, {passive: false});
+
+canvas.addEventListener('touchend', function(e) {
+  e.preventDefault();
+  clearTimeout(longPressTimer);
+  var dy = e.changedTouches[0].clientY - touchStartY;
+  var dt = Date.now() - touchStartTime;
+  if (dy > 30) {
+    startDuck();
+    setTimeout(endDuck, 400);
+  } else if (dt < 300) {
+    endDuck();
+    doJump();
+  } else {
+    endDuck();
+  }
+}, {passive: false});
+
+// クリック
+canvas.addEventListener('click', function(e) {
+  doJump();
+});
+
+// キーボード
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space' || e.code === 'ArrowUp' || e.key === 'w' || e.key === 'W') {
+    e.preventDefault();
+    doJump();
+  }
+  if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+    startDuck();
+  }
+});
+document.addEventListener('keyup', function(e) {
+  if (e.code === 'ArrowDown' || e.key === 's' || e.key === 'S') {
+    endDuck();
+  }
+});
+
+// ===== 障害物生成 =====
+function spawnObstacle() {
+  var r = Math.random();
+  var type;
+  // ステージ序盤はジャンプ系のみ
+  if (score < 10) {
+    type = 'low'; // 低い：ジャンプで回避
+  } else if (score < 25) {
+    type = r < 0.7 ? 'low' : 'high';
+  } else {
+    type = r < 0.55 ? 'low' : (r < 0.85 ? 'high' : 'double');
+  }
+
+  var obs = { x: W + 20, type: type, passed: false };
+
+  if (type === 'low') {
+    // 低い岩・切り株（序盤は小さめ）
+    var sizeScale = Math.min(1.0, 0.6 + score * 0.02);
+    obs.w = FROG_W * (0.55 + Math.random() * 0.35) * sizeScale;
+    obs.h = FROG_H * (0.45 + Math.random() * 0.25) * sizeScale;
+    obs.y = GROUND_Y - obs.h;
+    obs.emoji = Math.random() < 0.5 ? 'rock' : 'stump';
+  } else if (type === 'high') {
+    // 鳥・トンボ：立ち時に当たる高さ → しゃがんで回避
+    obs.w = FROG_W * 0.9;
+    obs.h = FROG_H * 0.55;
+    obs.y = GROUND_Y - FROG_H * 0.95; // カエルの頭〜胴体に直撃する高さ
+    obs.emoji = Math.random() < 0.5 ? 'bird' : 'dragonfly';
+  } else {
+    // double: 低＋高セット
+    obs.w  = FROG_W * 0.75;
+    obs.h  = FROG_H * 0.55;
+    obs.y  = GROUND_Y - obs.h;
+    obs.w2 = FROG_W * 0.8;
+    obs.h2 = FROG_H * 0.5;
+    obs.y2 = GROUND_Y - FROG_H * 0.95;
+    obs.emoji  = 'rock';
+    obs.emoji2 = 'bird';
+  }
+  obstacles.push(obs);
+}
+
+// ===== 当たり判定（見た目より一回り小さいボックス）=====
+function checkCollision(obs) {
+  // カエルのヒットボックス：見た目の60%に絞る
+  var fw = FROG_W * 0.48;
+  var fh = frog.isDucking ? FROG_H * 0.38 : FROG_H * 0.60;
+  var fx = frog.x + FROG_W * 0.26;
+  var fy = frog.isDucking ? (GROUND_Y - fh - FROG_H * 0.05) : (frog.y + FROG_H * 0.15);
+
+  function hitBox(ox, oy, ow, oh) {
+    // 障害物側も70%に絞る
+    var margin = 0.15;
+    return fx < ox + ow * (1 - margin) &&
+           fx + fw > ox + ow * margin &&
+           fy < oy + oh * (1 - margin) &&
+           fy + fh > oy + oh * margin;
+  }
+
+  if (obs.type === 'double') {
+    return hitBox(obs.x, obs.y, obs.w, obs.h) || hitBox(obs.x + obs.w * 0.6, obs.y2, obs.w2, obs.h2);
+  }
+  return hitBox(obs.x, obs.y, obs.w, obs.h);
+}
+
+// ===== ヒット処理 =====
+function onHit() {
+  if (invincible > 0) return;
+  lives--;
+  invincible = 90; // 1.5秒無敵
+  combo = 0;
+  frog.hitTimer = 30;
+  updateLivesUI();
+  playSound('hit');
+  spawnHitParticles();
+
+  if (lives <= 0) {
+    gameOver();
+  }
+}
+
+// ===== ゲームオーバー =====
+function gameOver() {
+  gameActive = false;
+  if (score > hiScore) {
+    hiScore = score;
+    try { localStorage.setItem('frogHiScore', hiScore); } catch(e) {}
+  }
+  document.getElementById('gameover-score').innerHTML =
+    'スコア: ' + score + '\nベスト: ' + hiScore;
+  document.getElementById('gameover-screen').classList.add('show');
+}
+
+// ===== コイン =====
+var coins = [];
+var COIN_R;
+
+function spawnJumpParticles() {
+  for (var i = 0; i < 6; i++) {
+    particles.push({
+      x: frog.x + FROG_W / 2,
+      y: GROUND_Y,
+      vx: (Math.random() - 0.5) * 3,
+      vy: -Math.random() * 3,
+      life: 1,
+      color: '#a8e0a8',
+      size: 4 + Math.random() * 3,
+    });
+  }
+}
+
+function spawnHitParticles() {
+  for (var i = 0; i < 12; i++) {
+    particles.push({
+      x: frog.x + FROG_W / 2,
+      y: frog.y + FROG_H / 2,
+      vx: (Math.random() - 0.5) * 5,
+      vy: (Math.random() - 0.5) * 5 - 2,
+      life: 1,
+      color: Math.random() < 0.5 ? '#f44336' : '#ffe066',
+      size: 5 + Math.random() * 4,
+    });
+  }
+}
+
+function spawnDodgeParticles(x, y) {
+  for (var i = 0; i < 5; i++) {
+    particles.push({
+      x: x, y: y,
+      vx: (Math.random() - 0.5) * 2,
+      vy: -Math.random() * 2 - 1,
+      life: 1,
+      color: '#ffe066',
+      size: 3 + Math.random() * 2,
+    });
+  }
+}
+
+function updateParticles() {
+  for (var i = particles.length - 1; i >= 0; i--) {
+    var p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.12;
+    p.life -= 0.055;
+    if (p.life <= 0) particles.splice(i, 1);
+  }
+}
+
+function drawParticles() {
+  for (var i = 0; i < particles.length; i++) {
+    var p = particles[i];
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ===== サウンド =====
+var audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    try {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } catch(e) { return null; }
+  }
+  return audioCtx;
+}
+
+function playSound(type) {
+  var ac = getAudio();
+  if (!ac) return;
+  try {
+    var osc = ac.createOscillator();
+    var gain = ac.createGain();
+    osc.connect(gain);
+    gain.connect(ac.destination);
+    if (type === 'jump') {
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(320, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(640, ac.currentTime + 0.1);
+      gain.gain.setValueAtTime(0.15, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.15);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.15);
+    } else if (type === 'hit') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(200, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(80, ac.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.2, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.25);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.25);
+    } else if (type === 'coin') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(880, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1320, ac.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.13, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.14);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.14);
+    } else if (type === 'combo') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(520, ac.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1040, ac.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.12, ac.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.18);
+      osc.start(ac.currentTime);
+      osc.stop(ac.currentTime + 0.18);
+    }
+  } catch(e) {}
+}
+
+// ===== 描画ヘルパー =====
+function drawRoundRect(x, y, w, h, r, fill, stroke) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w - r, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  ctx.lineTo(x + w, y + h - r);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  ctx.lineTo(x, y + r);
+  ctx.quadraticCurveTo(x, y, x + r, y);
+  ctx.closePath();
+  if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+  if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); }
+}
+
+// ===== 背景描画 =====
+function drawBackground() {
+  // 空
+  var skyGrad = ctx.createLinearGradient(0, 0, 0, GROUND_Y);
+  skyGrad.addColorStop(0, '#81d4fa');
+  skyGrad.addColorStop(1, '#b3e5fc');
+  ctx.fillStyle = skyGrad;
+  ctx.fillRect(0, 0, W, GROUND_Y);
+
+  // 雲・茂み
+  for (var i = 0; i < bgObjects.length; i++) {
+    var o = bgObjects[i];
+    if (o.type === 'cloud') {
+      drawCloud(o.x, H * 0.12, o.size * 28);
+    }
+  }
+
+  // 地面
+  ctx.fillStyle = '#66bb6a';
+  ctx.fillRect(0, GROUND_Y, W, H - GROUND_Y);
+
+  // 地面の縞
+  ctx.fillStyle = '#4caf50';
+  for (var i = 0; i < W; i += 28) {
+    ctx.fillRect(i, GROUND_Y + 4, 14, H - GROUND_Y - 4);
+  }
+
+  // 地面ライン
+  ctx.fillStyle = '#388e3c';
+  ctx.fillRect(0, GROUND_Y, W, 4);
+
+  // 池（装飾）
+  ctx.fillStyle = '#29b6f6';
+  ctx.beginPath();
+  ctx.ellipse(W * 0.75, GROUND_Y + 14, W * 0.1, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(W * 0.75 - 8, GROUND_Y + 11, W * 0.04, 4, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawCloud(x, y, size) {
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
+  ctx.beginPath();
+  ctx.arc(x, y, size * 0.5, 0, Math.PI * 2);
+  ctx.arc(x + size * 0.5, y - size * 0.2, size * 0.38, 0, Math.PI * 2);
+  ctx.arc(x + size, y, size * 0.42, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// 背景オブジェクトスクロール
+function updateBgObjects() {
+  for (var i = 0; i < bgObjects.length; i++) {
+    bgObjects[i].x -= bgObjects[i].speed;
+    if (bgObjects[i].x < -60) bgObjects[i].x = W + 60;
+  }
+}
+
+// ===== カエル描画 =====
+function drawFrog() {
+  var x = frog.x;
+  var y = frog.isDucking ? (GROUND_Y - FROG_H * 0.6) : frog.y;
+  var w = FROG_W;
+  var h = frog.isDucking ? FROG_H * 0.6 : FROG_H;
+
+  // 無敵中は点滅
+  if (invincible > 0 && Math.floor(invincible / 5) % 2 === 0) return;
+
+  // 影
+  ctx.fillStyle = 'rgba(0,0,0,0.15)';
+  ctx.beginPath();
+  ctx.ellipse(x + w / 2, GROUND_Y + 3, w * 0.4, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // 体
+  var bodyColor = frog.hitTimer > 0 ? '#ff8a80' : '#66bb6a';
+  drawRoundRect(x + w * 0.05, y + h * 0.25, w * 0.9, h * 0.75, 6, bodyColor, '#388e3c');
+
+  // 腹
+  drawRoundRect(x + w * 0.2, y + h * 0.45, w * 0.6, h * 0.5, 4, '#a5d6a7', null);
+
+  // 頭
+  drawRoundRect(x + w * 0.1, y, w * 0.8, h * 0.45, 8, bodyColor, '#388e3c');
+
+  // 目
+  ctx.fillStyle = 'white';
+  ctx.beginPath(); ctx.arc(x + w * 0.28, y + h * 0.18, w * 0.13, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w * 0.72, y + h * 0.18, w * 0.13, 0, Math.PI * 2); ctx.fill();
+
+  // 瞳（ジャンプ中は上を向く）
+  var eyeOff = frog.isJumping ? -2 : 0;
+  ctx.fillStyle = '#1b5e20';
+  ctx.beginPath(); ctx.arc(x + w * 0.28, y + h * 0.18 + eyeOff, w * 0.07, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(x + w * 0.72, y + h * 0.18 + eyeOff, w * 0.07, 0, Math.PI * 2); ctx.fill();
+
+  // 口（しゃがみ時ニヤリ）
+  ctx.strokeStyle = '#1b5e20';
+  ctx.lineWidth = 1.5;
+  if (frog.isDucking) {
+    ctx.beginPath();
+    ctx.arc(x + w * 0.5, y + h * 0.32, w * 0.15, 0, Math.PI);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.36, y + h * 0.35);
+    ctx.lineTo(x + w * 0.64, y + h * 0.35);
+    ctx.stroke();
+  }
+
+  // 足（ジャンプ中は伸びる）
+  ctx.fillStyle = '#4caf50';
+  if (frog.isJumping) {
+    // 後ろ足伸ばす
+    ctx.fillRect(x + w * 0.1, y + h * 0.85, w * 0.2, h * 0.2);
+    ctx.fillRect(x + w * 0.7, y + h * 0.85, w * 0.2, h * 0.2);
+  } else if (frog.isDucking) {
+    ctx.fillRect(x, y + h * 0.7, w * 0.25, h * 0.3);
+    ctx.fillRect(x + w * 0.75, y + h * 0.7, w * 0.25, h * 0.3);
+  } else {
+    // 歩きアニメ
+    var legOff = Math.sin(frameCount * 0.25) * 3;
+    ctx.fillRect(x + w * 0.05, y + h * 0.88 + legOff, w * 0.22, h * 0.18);
+    ctx.fillRect(x + w * 0.73, y + h * 0.88 - legOff, w * 0.22, h * 0.18);
+  }
+}
+
+// ===== 障害物描画 =====
+function drawObstacles() {
+  for (var i = 0; i < obstacles.length; i++) {
+    var o = obstacles[i];
+    drawOneObstacle(o.x, o.y, o.w, o.h, o.emoji);
+    if (o.type === 'double') {
+      drawOneObstacle(o.x + o.w * 0.6, o.y2, o.w2, o.h2, o.emoji2);
+    }
+  }
+}
+
+function drawOneObstacle(x, y, w, h, type) {
+  if (type === 'rock') {
+    // 岩
+    ctx.fillStyle = '#78909c';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h * 0.65, w * 0.5, h * 0.55, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#90a4ae';
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.38, y + h * 0.42, w * 0.28, h * 0.3, -0.3, 0, Math.PI * 2);
+    ctx.fill();
+    // 影
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, GROUND_Y + 3, w * 0.42, 5, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (type === 'stump') {
+    // 切り株
+    ctx.fillStyle = '#8d6e63';
+    drawRoundRect(x + w * 0.15, y + h * 0.3, w * 0.7, h * 0.7, 4, '#8d6e63', '#5d4037');
+    ctx.fillStyle = '#a1887f';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h * 0.3, w * 0.35, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 年輪
+    ctx.strokeStyle = '#6d4c41';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h * 0.3, w * 0.18, h * 0.08, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  } else if (type === 'bird') {
+    // 鳥
+    ctx.fillStyle = '#ef5350';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, w * 0.45, h * 0.32, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 翼（パタパタ）
+    var wingAngle = Math.sin(frameCount * 0.35) * 0.4;
+    ctx.fillStyle = '#e53935';
+    ctx.save();
+    ctx.translate(x + w * 0.2, y + h * 0.38);
+    ctx.rotate(-wingAngle - 0.3);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, w * 0.35, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(x + w * 0.8, y + h * 0.38);
+    ctx.rotate(wingAngle + 0.3);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, w * 0.35, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+    // くちばし
+    ctx.fillStyle = '#ffb300';
+    ctx.beginPath();
+    ctx.moveTo(x + w * 0.88, y + h * 0.45);
+    ctx.lineTo(x + w + 4, y + h * 0.5);
+    ctx.lineTo(x + w * 0.88, y + h * 0.6);
+    ctx.fill();
+    // 目
+    ctx.fillStyle = 'white';
+    ctx.beginPath(); ctx.arc(x + w * 0.78, y + h * 0.38, w * 0.1, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#1a237e';
+    ctx.beginPath(); ctx.arc(x + w * 0.8, y + h * 0.38, w * 0.05, 0, Math.PI * 2); ctx.fill();
+  } else if (type === 'dragonfly') {
+    // トンボ
+    ctx.fillStyle = '#26c6da';
+    ctx.beginPath();
+    ctx.ellipse(x + w / 2, y + h / 2, w * 0.48, h * 0.18, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // 羽
+    ctx.fillStyle = 'rgba(176,229,255,0.75)';
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.35, y + h * 0.2, w * 0.3, h * 0.3, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.65, y + h * 0.2, w * 0.3, h * 0.3, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(176,229,255,0.65)';
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.35, y + h * 0.75, w * 0.28, h * 0.25, 0.2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x + w * 0.65, y + h * 0.75, w * 0.28, h * 0.25, -0.2, 0, Math.PI * 2);
+    ctx.fill();
+    // 目
+    ctx.fillStyle = '#00838f';
+    ctx.beginPath(); ctx.arc(x + w * 0.78, y + h * 0.45, w * 0.1, 0, Math.PI * 2); ctx.fill();
+  }
+}
+
+// ===== スコア・コンボ表示 =====
+var comboTimer = 0;
+function showCombo(n) {
+  var el = document.getElementById('combo-display');
+  if (n >= 3) {
+    el.textContent = n + ' DODGE COMBO!';
+    el.style.opacity = '1';
+    comboTimer = 90;
+    playSound('combo');
+  }
+}
+
+// ===== メインループ =====
+var animId = null;
+function gameLoop() {
+  if (!gameActive) return;
+  frameCount++;
+
+  // 速度上昇
+  obstacleSpeed = OBSTACLE_SPEED_INIT + Math.floor(score / 10) * 0.4;
+  if (obstacleSpeed > 12) obstacleSpeed = 12;
+
+  // カエル物理
+  if (!frog.isDucking) {
+    frog.vy += GRAVITY;
+    frog.y += frog.vy;
+    if (frog.y >= GROUND_Y - FROG_H) {
+      frog.y = GROUND_Y - FROG_H;
+      frog.vy = 0;
+      frog.isJumping = false;
+    }
+  } else {
+    frog.y = GROUND_Y - FROG_H;
+    frog.vy = 0;
+    frog.isJumping = false;
+  }
+
+  if (frog.hitTimer > 0) frog.hitTimer--;
+  if (invincible > 0) invincible--;
+
+  // 障害物スポーン：最後の障害物が十分左に移動したら次を生成
+  var spawnGap = W * 0.75 + Math.random() * W * 0.35; // 画面幅の75〜110%の間隔
+  var lastObsX = obstacles.length > 0 ? obstacles[obstacles.length - 1].x : -spawnGap;
+  if (lastObsX <= W - spawnGap) {
+    spawnObstacle();
+    // コインをランダムで追加（30%の確率）
+    if (Math.random() < 0.30) spawnCoin();
+  }
+
+  // 障害物更新
+  for (var i = obstacles.length - 1; i >= 0; i--) {
+    obstacles[i].x -= obstacleSpeed;
+    // スコア加算
+    if (!obstacles[i].passed && obstacles[i].x + obstacles[i].w < frog.x) {
+      obstacles[i].passed = true;
+      score++;
+      updateScoreUI();
+      combo++;
+      lastDodgeFrame = frameCount;
+      showCombo(combo);
+      spawnDodgeParticles(frog.x - 10, frog.y + FROG_H / 2);
+    }
+    // 画面外削除
+    if (obstacles[i].x + (obstacles[i].w2 || obstacles[i].w) + 20 < 0) {
+      obstacles.splice(i, 1);
+      continue;
+    }
+    // 当たり判定
+    if (checkCollision(obstacles[i])) {
+      onHit();
+    }
+  }
+
+  // コンボ表示フェード
+  if (comboTimer > 0) {
+    comboTimer--;
+    document.getElementById('combo-display').style.opacity = (comboTimer / 50).toString();
+  }
+
+  // コンボリセット（しばらく避けられなかった）
+  if (frameCount - lastDodgeFrame > 120 && combo > 0) {
+    combo = 0;
+  }
+
+  // 背景スクロール
+  updateBgObjects();
+  updateCoins();
+  updateParticles();
+  checkAchievements();
+  updateAch();
+
+  // 描画
+  ctx.clearRect(0, 0, W, H);
+  drawBackground();
+  drawCoins();
+  drawObstacles();
+  drawFrog();
+  drawParticles();
+
+  // 距離スコア（右上）
+  ctx.fillStyle = 'rgba(0,0,0,0.3)';
+  ctx.font = 'bold ' + Math.round(W * 0.028) + 'px "M PLUS Rounded 1c"';
+  ctx.textAlign = 'right';
+  ctx.fillText('x' + obstacleSpeed.toFixed(1), W - 8, 20);
+  ctx.textAlign = 'left';
+
+  animId = requestAnimationFrame(gameLoop);
+}
+
+// ===== 実績 =====
+var achievements = {
+  combo5:   { done: false, label: '5コンボ達成！', emoji: '🔥' },
+  combo10:  { done: false, label: '10コンボ！', emoji: '💥' },
+  score20:  { done: false, label: 'スコア20達成！', emoji: '⭐' },
+  score50:  { done: false, label: 'スコア50達成！', emoji: '🏆' },
+  score100: { done: false, label: 'スコア100！', emoji: '👑' },
+};
+
+var achQueue = [];
+var achTimer = 0;
+
+function checkAchievements() {
+  if (!achievements.combo5.done  && combo >= 5)   unlockAch('combo5');
+  if (!achievements.combo10.done && combo >= 10)  unlockAch('combo10');
+  if (!achievements.score20.done && score >= 20)  unlockAch('score20');
+  if (!achievements.score50.done && score >= 50)  unlockAch('score50');
+  if (!achievements.score100.done && score >= 100) unlockAch('score100');
+}
+
+function unlockAch(key) {
+  achievements[key].done = true;
+  achQueue.push(achievements[key]);
+  if (achTimer <= 0) showNextAch();
+}
+
+function showNextAch() {
+  if (achQueue.length === 0) return;
+  var ach = achQueue.shift();
+  var el = document.getElementById('ach-popup');
+  el.innerHTML = ach.emoji + ' ' + ach.label;
+  el.style.opacity = '1';
+  el.style.transform = 'translateX(-50%) translateY(0)';
+  achTimer = 150;
+}
+
+function updateAch() {
+  if (achTimer > 0) {
+    achTimer--;
+    if (achTimer === 30) {
+      var el = document.getElementById('ach-popup');
+      el.style.opacity = '0';
+      el.style.transform = 'translateX(-50%) translateY(-20px)';
+    }
+    if (achTimer === 0 && achQueue.length > 0) {
+      setTimeout(showNextAch, 300);
+    }
+  }
+}
+
+function resetAchievements() {
+  for (var key in achievements) achievements[key].done = false;
+  achQueue = [];
+  achTimer = 0;
+  var el = document.getElementById('ach-popup');
+  if (el) { el.style.opacity = '0'; }
+}
+
+// ===== 開始 =====
+function startGame() {
+  initGame();
+  gameActive = true;
+  if (animId) cancelAnimationFrame(animId);
+  gameLoop();
+}
+
+document.getElementById('start-btn').addEventListener('click', function() {
+  document.getElementById('start-screen').style.display = 'none';
+  startGame();
+});
+
+document.getElementById('retry-btn').addEventListener('click', function() {
+  document.getElementById('gameover-screen').classList.remove('show');
+  startGame();
+});
+
+// リサイズ
+window.addEventListener('resize', function() {
+  resizeCanvas();
+  if (!gameActive) {
+    FROG_W = W * 0.09;
+    FROG_H = W * 0.09;
+  }
+});
+
+// 初期化
+resizeCanvas();
+</script>
+</body>
+</html>
