@@ -346,7 +346,22 @@ var OBSTACLE_SPEED_INIT = 4.0;
 
 // ===== 状態 =====
 var score = 0;
-var hiScore = parseInt(localStorage.getItem('frogHiScore') || '0', 10);
+var STORAGE_KEY = 'frogHiScore';
+
+function loadHiScore() {
+  try {
+    var saved = parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+    return isNaN(saved) ? 0 : saved;
+  } catch(e) {
+    return 0;
+  }
+}
+
+function saveHiScore(value) {
+  try { localStorage.setItem(STORAGE_KEY, String(value)); } catch(e) {}
+}
+
+var hiScore = loadHiScore();
 var lives = 3;
 var gameActive = false;
 var frameCount = 0;
@@ -533,7 +548,7 @@ function doJump() {
 }
 
 function startDuck() {
-  if (!gameActive) return;
+  if (!gameActive || frog.isJumping) return;
   frog.isDucking = true;
 }
 
@@ -674,16 +689,12 @@ function gameOver() {
   gameActive = false;
   if (score > hiScore) {
     hiScore = score;
-    try { localStorage.setItem('frogHiScore', hiScore); } catch(e) {}
+    saveHiScore(hiScore);
   }
   document.getElementById('gameover-score').innerHTML =
-    'スコア: ' + score + '\nベスト: ' + hiScore;
+    'スコア: ' + score + '<br>ベスト: ' + hiScore;
   document.getElementById('gameover-screen').classList.add('show');
 }
-
-// ===== コイン =====
-var coins = [];
-var COIN_R;
 
 function spawnJumpParticles() {
   for (var i = 0; i < 6; i++) {
@@ -1236,14 +1247,28 @@ document.getElementById('retry-btn').addEventListener('click', function() {
   startGame();
 });
 
-// リサイズ
-window.addEventListener('resize', function() {
+function handleResize() {
+  var oldGroundY = GROUND_Y || 0;
+  var oldFrogH = FROG_H || 0;
+  var wasGrounded = !frog.isJumping;
+  var heightAboveGround = oldGroundY ? oldGroundY - (frog.y + oldFrogH) : 0;
+
   resizeCanvas();
-  if (!gameActive) {
-    FROG_W = W * 0.09;
-    FROG_H = W * 0.09;
+  FROG_W = W * 0.09;
+  FROG_H = W * 0.09;
+  frog.x = W * 0.15;
+
+  if (gameActive && !wasGrounded) {
+    var maxHeightAboveGround = Math.max(0, GROUND_Y - FROG_H);
+    var preservedHeight = Math.min(Math.max(0, heightAboveGround), maxHeightAboveGround);
+    frog.y = Math.max(0, GROUND_Y - FROG_H - preservedHeight);
+  } else {
+    frog.y = GROUND_Y - FROG_H;
   }
-});
+}
+
+// リサイズ
+window.addEventListener('resize', handleResize);
 
 // 初期化
 resizeCanvas();
